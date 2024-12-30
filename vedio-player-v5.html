@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Player with Playlist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 h-screen flex">
+    <div class="flex flex-1 flex-col lg:flex-row">
+      <!-- Video Container -->
+      <div
+        class="flex-1 flex flex-col items-center justify-center bg-white shadow-md p-6"
+      >
+        <video
+          id="video"
+          class="w-full max-w-3xl rounded-lg border border-gray-300"
+          controls
+        >
+          <source id="video-source" src="" type="video/mp4" />
+          Your browser does not support HTML5 video.
+        </video>
+        <div
+          id="controls"
+          class="flex flex-wrap gap-4 mt-4 items-center justify-center"
+        >
+          <!-- File Input -->
+          <label
+            class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg cursor-pointer"
+          >
+            <input
+              type="file"
+              id="file-input"
+              accept="video/*"
+              multiple
+              class="hidden"
+            />
+            Upload Files
+          </label>
+          <!-- Play/Pause Button -->
+          <button
+            id="play-pause"
+            class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg"
+          >
+            Play/Pause
+          </button>
+          <!-- Stop Button -->
+          <button
+            id="stop"
+            class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg"
+          >
+            Stop
+          </button>
+          <!-- Playback Speed -->
+          <select
+            id="playback-speed"
+            class="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg"
+          >
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x (Normal)</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Playlist Sidebar -->
+      <div
+        class="w-full lg:w-1/3 bg-gray-200 p-6 overflow-y-auto border-l border-gray-300"
+      >
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 text-center">
+          Playlist
+        </h3>
+        <ul id="video-list" class="space-y-3">
+          <!-- Playlist Items will be injected here -->
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      const video = document.getElementById("video");
+      const fileInput = document.getElementById("file-input");
+      const playPauseButton = document.getElementById("play-pause");
+      const stopButton = document.getElementById("stop");
+      const playbackSpeed = document.getElementById("playback-speed");
+      const videoList = document.getElementById("video-list");
+      let playlist = [];
+      let currentIndex = 0;
+
+      // Handle file selection
+      fileInput.addEventListener("change", (event) => {
+        const files = event.target.files;
+
+        // Clear existing playlist
+        playlist = [];
+        videoList.innerHTML = "";
+
+        // Add files to playlist
+        Array.from(files).forEach((file, index) => {
+          const url = URL.createObjectURL(file);
+          playlist.push({ name: file.name, url: url });
+
+          // Add to playlist UI
+          const listItem = document.createElement("li");
+          listItem.textContent = file.name;
+          listItem.dataset.index = index;
+          listItem.className =
+            "block bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg cursor-pointer text-center";
+          listItem.addEventListener("click", () => playFromPlaylist(index));
+          videoList.appendChild(listItem);
+        });
+
+        // Play the first video
+        if (playlist.length > 0) {
+          playFromPlaylist(0);
+        }
+      });
+
+      // Play video from playlist
+      function playFromPlaylist(index) {
+        currentIndex = index;
+        video.src = playlist[index].url;
+        video.load();
+        video.play();
+
+        // Highlight the active item in the playlist
+        document
+          .querySelectorAll("#video-list li")
+          .forEach((item) =>
+            item.classList.remove("bg-green-500", "hover:bg-green-600")
+          );
+        document
+          .querySelector(`#video-list li[data-index="${index}"]`)
+          .classList.add("bg-green-500", "hover:bg-green-600");
+      }
+
+      // Play or pause the video
+      playPauseButton.addEventListener("click", () => {
+        if (video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      });
+
+      // Stop the video
+      stopButton.addEventListener("click", () => {
+        video.pause();
+        video.currentTime = 0;
+      });
+
+      // Adjust playback speed
+      playbackSpeed.addEventListener("change", (event) => {
+        video.playbackRate = parseFloat(event.target.value);
+      });
+
+      // Automatically play the next video
+      video.addEventListener("ended", () => {
+        if (currentIndex < playlist.length - 1) {
+          playFromPlaylist(currentIndex + 1);
+        }
+      });
+
+      // Remove download option from the video element
+      video.removeAttribute("controlsList");
+    </script>
+  </body>
+</html>
